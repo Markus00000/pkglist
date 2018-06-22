@@ -1,0 +1,4 @@
+#!/bin/bash
+# List explicitly installed packages
+# - excludes packages from base and base-devel groups
+comm -23 <(pacman -Qqe | sort) <(pacman -Sqg base base-devel | sort) | sort -n

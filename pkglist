@@ -1,0 +1,47 @@
+#!/usr/bin/python
+import argparse
+import os.path
+import subprocess
+
+version = '1.0.0'
+scripts = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'scripts/')
+
+hlp = {'analyze': ('compare a list of packages that should be installed to '
+                   + 'actually installed packages'),
+       'date': 'list explicitly installed packages by installation date',
+       'size': ('list explicitly installed packages by size excluding the '
+                + 'size of their dependencies'),
+       'usage': ('list explicitly installed packages by disk space that would '
+                 + 'be freed if uninstalled'),
+       'explicit': 'list explicitly installed packages',
+       'opt': ('list installed optional dependencies not required by any '
+               + 'package')}
+
+parser = argparse.ArgumentParser(
+    description='%(prog)s analyzes installed packages on Arch Linux.')
+parser.add_argument(
+    '-v', '--version', action='version', version=f'%(prog)s {version}')
+group = parser.add_mutually_exclusive_group()
+group.add_argument('-a', '--analyze', help=hlp['analyze'])
+group.add_argument('-d', '--date', action='store_true', help=hlp['date'])
+group.add_argument('-s', '--size', action='store_true', help=hlp['size'])
+group.add_argument('-u', '--usage', action='store_true', help=hlp['usage'])
+group.add_argument('-e', '--explicit', action='store_true',
+                   help=hlp['explicit'])
+group.add_argument('-o', '--opt', action='store_true', help=hlp['opt'])
+args = parser.parse_args()
+
+if args.analyze:
+    subprocess.call([os.path.join(scripts, 'analyze'), args.analyze])
+elif args.date:
+    subprocess.call([os.path.join(scripts, 'date')])
+elif args.size:
+    subprocess.call([os.path.join(scripts, 'size')])
+elif args.usage:
+    subprocess.call([os.path.join(scripts, 'usage')])
+elif args.explicit:
+    subprocess.call([os.path.join(scripts, 'explicit')])
+elif args.opt:
+    subprocess.call([os.path.join(scripts, 'opt')])
+else:
+    parser.print_help()

@@ -1,0 +1,3 @@
+#!/bin/bash
+# List installed optional dependencies not required by any package
+comm -13 <(pacman -Qdtq | sort) <(pacman -Qdttq | sort)

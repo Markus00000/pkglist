@@ -1,0 +1,37 @@
+#-------
+# Legend
+#-------
+
+# #     == comment line or setup command as root
+# $     == comment line or setup command as user
+# group == package group
+# @     == AUR package
+# +     == optional dependency of another package
+# ++    == explicitly installed for another package
+# (…)   == package notes
+
+#-------
+# Groups
+#-------
+
+group base
++ifplugd (opt netctl)
+group base-devel
+
+#-------------
+# Repositories
+#-------------
+
+vim
+zsh
+++zsh-completions
+++zsh-syntax-highlighting
+  # chsh -s $(which zsh)
+  $ chsh -s $(which zsh)
+
+#----
+# AUR
+#----
+
+@aurvote
+@yay-bin

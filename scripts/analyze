@@ -1,0 +1,45 @@
+#!/bin/bash
+# Compare a list of packages that should be installed to actually installed packages
+if [ -z "$1" ]; then
+    echo 'Usage: pkglist-analyze <path to package list>'
+    exit 1
+fi
+IN="$1"
+
+TMP=$(mktemp -d --suffix='.pkglist-analyze')
+CLEAN="$TMP/pkgs-clean.txt"
+
+GROUP="$TMP/pkgs-groups"
+REPO="$TMP/pkgs-repo"
+AUR="$TMP/pkgs-aur"
+OPT="$TMP/pkgs-opt"
+OPTEXP="$TMP/pkgs-optexp"
+
+EXP_IS="$TMP/exp-is"
+DEP_IS="$TMP/dep-is"
+
+EXP_SHOULD="$TMP/exp-should"
+DEP_SHOULD="$TMP/dep-should"
+
+sed '/^group /!d; s/^group //g; s/ .*//g' "$IN" | while read -r pkg; do pacman -Sg "$pkg"; done | sed 's/.* //g' | sort -u > "$GROUP"
+sed '/^#\|  # \|  \$ \|^group /d; /^$/d; s/ .*//g' "$IN" | sort > "$CLEAN"
+sed '/^[@+]/d;' "$CLEAN" > "$REPO"
+sed '/^@/!d; s/[@+]//g' "$CLEAN" > "$AUR"
+sed '/^+[^+]/!d; s/[@+]//g' "$CLEAN" > "$OPT"
+sed '/^++/!d; s/[@+]//g' "$CLEAN" > "$OPTEXP"
+
+pacman -Qqe | sort > "$EXP_IS"
+pacman -Qqd | sort > "$DEP_IS"
+
+cat "$GROUP" "$REPO" "$AUR" "$OPTEXP" | sort > "$EXP_SHOULD"
+comm -13 "$EXP_IS" <(cat "$EXP_SHOULD" "$OPT" | while read -r pkg; do pactree -u "$pkg" 2> /dev/null; done | sort -u) > "$DEP_SHOULD"
+
+hidden='[0-9]+[d,][0-9]+'
+
+echo 'explicit should <=> explicit is'
+diff "$EXP_SHOULD" "$EXP_IS" | grep -vE "$hidden"
+
+echo 'dependencies should <=> dependencies is'
+diff "$DEP_SHOULD" "$DEP_IS" | grep -vE "$hidden"
+
+rm -rf "$TMP"
