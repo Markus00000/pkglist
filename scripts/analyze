@@ -34,7 +34,7 @@ pacman -Qqd | sort > "$DEP_IS"
 cat "$GROUP" "$REPO" "$AUR" "$OPTEXP" | sort > "$EXP_SHOULD"
 comm -13 "$EXP_IS" <(cat "$EXP_SHOULD" "$OPT" | while read -r pkg; do pactree -u "$pkg" 2> /dev/null; done | sort -u) > "$DEP_SHOULD"
 
-hidden='[0-9]+[d,][0-9]+'
+hidden='[0-9,]+[acd][0-9,]+'
 
 echo 'explicit should <=> explicit is'
 diff "$EXP_SHOULD" "$EXP_IS" | grep -vE "$hidden"
