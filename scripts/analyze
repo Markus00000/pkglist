@@ -40,10 +40,10 @@ comm -13 "$EXP_IS" <(cat "$DEP_SHOULD_PACTREE" "$OPT" | sort -u) > "$DEP_SHOULD"
 
 hidden='[0-9,]+[acd][0-9,]+'
 
-echo 'explicit should <=> explicit is'
+echo 'should be explicit <=> should not be explicit'
 diff "$EXP_SHOULD" "$EXP_IS" | grep -vE "$hidden"
 
-echo 'dependencies should <=> dependencies is'
+echo 'should be dependency <=> should not be dependency'
 diff "$DEP_SHOULD" "$DEP_IS" | grep -vE "$hidden"
 
 rm -rf "$TMP"
