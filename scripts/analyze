@@ -20,6 +20,7 @@ DEP_IS="$TMP/dep-is"
 
 EXP_SHOULD="$TMP/exp-should"
 DEP_SHOULD="$TMP/dep-should"
+DEP_SHOULD_PACTREE="$TMP/dep-should-pactree"
 
 sed '/^group /!d; s/^group //g; s/ .*//g' "$IN" | while read -r pkg; do pacman -Sg "$pkg"; done | sed 's/.* //g' | sort -u > "$GROUP"
 sed '/^#\|  # \|  \$ \|^group /d; /^$/d; s/ .*//g' "$IN" | sort > "$CLEAN"
@@ -32,7 +33,10 @@ pacman -Qqe | sort > "$EXP_IS"
 pacman -Qqd | sort > "$DEP_IS"
 
 cat "$GROUP" "$REPO" "$AUR" "$OPTEXP" | sort > "$EXP_SHOULD"
-comm -13 "$EXP_IS" <(cat "$EXP_SHOULD" "$OPT" | while read -r pkg; do pactree -u "$pkg" 2> /dev/null; done | sort -u) > "$DEP_SHOULD"
+# Output of pactree will lack dependencies that are not installed
+cat "$EXP_SHOULD" "$OPT" | while read -r pkg; do pactree -u "$pkg" 2> /dev/null; done > "$DEP_SHOULD_PACTREE"
+# Add dependencies that are not installed
+comm -13 "$EXP_IS" <(cat "$DEP_SHOULD_PACTREE" "$OPT" | sort -u) > "$DEP_SHOULD"
 
 hidden='[0-9,]+[acd][0-9,]+'
 
