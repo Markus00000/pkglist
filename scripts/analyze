@@ -9,6 +9,8 @@ IN="$1"
 TMP=$(mktemp -d --suffix='.pkglist-analyze')
 CLEAN="$TMP/pkgs-clean.txt"
 
+INSTALLED="$TMP/pkgs-installed"
+SHOULD="$TMP/pkgs-should"
 GROUP="$TMP/pkgs-groups"
 REPO="$TMP/pkgs-repo"
 AUR="$TMP/pkgs-aur"
@@ -22,6 +24,15 @@ EXP_SHOULD="$TMP/exp-should"
 DEP_SHOULD="$TMP/dep-should"
 DEP_SHOULD_PACTREE="$TMP/dep-should-pactree"
 
+EXP_UNWANTED="$TMP/exp-unwanted"
+DEP_UNWANTED="$TMP/dep-unwanted"
+EXP_MISSING="$TMP/exp-missing"
+DEP_MISSING="$TMP/dep-missing"
+
+EXP_MISSING_ASDEPS="$TMP/exp-missing-asdeps"
+DEP_MISSING_ASDEPS="$TMP/dep-missing-asdeps"
+
+# Parse list of packages
 sed '/^group /!d; s/^group //g; s/ .*//g' "$IN" | while read -r pkg; do pacman -Sg "$pkg"; done | sed 's/.* //g' | sort -u > "$GROUP"
 sed '/^#\|  # \|  \$ \|^group /d; /^$/d; s/ .*//g' "$IN" | sort > "$CLEAN"
 sed '/^[@+]/d;' "$CLEAN" > "$REPO"
@@ -29,21 +40,55 @@ sed '/^@/!d; s/[@+]//g' "$CLEAN" > "$AUR"
 sed '/^+[^+]/!d; s/[@+]//g' "$CLEAN" > "$OPT"
 sed '/^++/!d; s/[@+]//g' "$CLEAN" > "$OPTEXP"
 
+# Installed packages
+pacman -Qq | sort > "$INSTALLED"
 pacman -Qqe | sort > "$EXP_IS"
 pacman -Qqd | sort > "$DEP_IS"
 
+# Packages that should be installed
 cat "$GROUP" "$REPO" "$AUR" "$OPTEXP" | sort > "$EXP_SHOULD"
 # Output of pactree will lack dependencies that are not installed
 cat "$EXP_SHOULD" "$OPT" | while read -r pkg; do pactree -u "$pkg" 2> /dev/null; done > "$DEP_SHOULD_PACTREE"
 # Add dependencies that are not installed
-comm -13 "$EXP_IS" <(cat "$DEP_SHOULD_PACTREE" "$OPT" | sort -u) > "$DEP_SHOULD"
+comm -13 "$EXP_SHOULD" <(cat "$DEP_SHOULD_PACTREE" "$OPT" | sort -u) > "$DEP_SHOULD"
+sort "$EXP_SHOULD" "$DEP_SHOULD" > "$SHOULD"
 
-hidden='[0-9,]+[acd][0-9,]+'
+# Determine unwanted and missing packages as well as packages with incorrect install reason
+comm -23 "$EXP_IS" "$SHOULD" > "$EXP_UNWANTED"
+comm -23 "$DEP_IS" "$SHOULD" > "$DEP_UNWANTED"
+comm -23 "$EXP_SHOULD" "$INSTALLED" > "$EXP_MISSING"
+comm -23 "$DEP_SHOULD" "$INSTALLED" > "$DEP_MISSING"
+comm -12 "$EXP_SHOULD" "$DEP_IS" > "$EXP_MISSING_ASDEPS"
+comm -12 "$DEP_SHOULD" "$EXP_IS" > "$DEP_MISSING_ASDEPS"
 
-echo 'should be explicit <=> should not be explicit'
-diff "$EXP_SHOULD" "$EXP_IS" | grep -vE "$hidden"
-
-echo 'should be dependency <=> should not be dependency'
-diff "$DEP_SHOULD" "$DEP_IS" | grep -vE "$hidden"
+# Output Pacman commands to correct state of packages
+if [[ -s $EXP_UNWANTED ]]; then
+    echo -e '== Remove unwanted explicit'
+    echo "$ sudo pacman -R $(paste -s -d ' ' "$EXP_UNWANTED")"
+fi
+if [[ -s $DEP_UNWANTED ]]; then
+    echo -e '== Remove unwanted dependencies'
+    echo "$ sudo pacman -R $(paste -s -d ' ' "$DEP_UNWANTED")"
+fi
+if [[ -s $EXP_UNWANTED && -s $DEP_UNWANTED ]]; then
+    echo -e '== Remove all unwanted'
+    echo "$ sudo pacman -R $(paste -s -d ' ' <(cat "$EXP_UNWANTED" "$DEP_UNWANTED"))"
+fi
+if [[ -s $EXP_MISSING ]]; then
+    echo -e '== Install missing explicit'
+    echo "$ sudo pacman -S $(paste -s -d ' ' "$EXP_MISSING")"
+fi
+if [[ -s $DEP_MISSING ]]; then
+    echo -e '== Install missing dependencies'
+    echo "$ sudo pacman -S --asdeps $(paste -s -d ' ' "$DEP_MISSING")"
+fi
+if [[ -s $EXP_MISSING_ASDEPS ]]; then
+    echo -e '== Correct install reason for explicit'
+    echo "$ sudo pacman -D --asexplicit $(paste -s -d ' ' "$EXP_MISSING_ASDEPS")"
+fi
+if [[ -s $DEP_MISSING_ASDEPS ]]; then
+    echo -e '== Correct install reason for dependencies'
+    echo "$ sudo pacman -D --asdeps $(paste -s -d ' ' "$DEP_MISSING_ASDEPS")"
+fi
 
 rm -rf "$TMP"
