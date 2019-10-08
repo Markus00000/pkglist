@@ -34,7 +34,7 @@ DEP_MISSING_ASDEPS="$TMP/dep-missing-asdeps"
 
 # Parse list of packages
 sed '/^group /!d; s/^group //g; s/ .*//g' "$IN" | while read -r pkg; do pacman -Sg "$pkg"; done | sed 's/.* //g' | sort -u > "$GROUP"
-sed '/^#\|  # \|  \$ \|^group /d; /^$/d; s/ .*//g' "$IN" | sort > "$CLEAN"
+sed '/^group/d; s/^\s\+//g; s/ .*//g; /^[$#]/d; /^$/d' "$IN" | sort > "$CLEAN"
 sed '/^[@+]/d;' "$CLEAN" > "$REPO"
 sed '/^@/!d; s/[@+]//g' "$CLEAN" > "$AUR"
 sed '/^+[^+]/!d; s/[@+]//g' "$CLEAN" > "$OPT"
