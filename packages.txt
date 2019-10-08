@@ -14,7 +14,6 @@
 # Groups
 #-------
 
-group base
 +ifplugd (opt netctl)
 group base-devel
 
@@ -22,7 +21,12 @@ group base-devel
 # Repositories
 #-------------
 
-vim
+base (meta)
+  +bash-completion (opt bash)
+  +linux
+    +linux-firmware
+neovim
++python-pynvim
 zsh
 ++zsh-completions
 ++zsh-syntax-highlighting
@@ -34,4 +38,4 @@ zsh
 #----
 
 @aurvote
-@yay-bin
+@pikaur
