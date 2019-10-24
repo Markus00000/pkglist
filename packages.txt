@@ -2,40 +2,31 @@
 # Legend
 #-------
 
-# #     == comment line or setup command as root
-# $     == comment line or setup command as user
-# group == package group
-# @     == AUR package
-# +     == optional dependency of another package
-# ++    == explicitly installed for another package
-# (…)   == package notes
+# …             == comment (ignored)
+# <pkg>         == package from official repository
+# group <group> == Package group
+# +<pkg>        == optional dependency of another package
+# ++<pkg>       == explicitly installed for another package
+# @<pkg>        == AUR package (“@” after “+”)
+# <pkg> (…)     == package notes (ignored)
+# indentation is ignored
 
-#-------
-# Groups
-#-------
-
-+ifplugd (opt netctl)
 group base-devel
-
-#-------------
-# Repositories
-#-------------
 
 base (meta)
   +bash-completion (opt bash)
   +linux
     +linux-firmware
+
+@aurvote
+chromium
++@pepper-flash (nonfree)
 neovim
 +python-pynvim
+@pikaur
++asp
 zsh
 ++zsh-completions
 ++zsh-syntax-highlighting
   # chsh -s $(which zsh)
   $ chsh -s $(which zsh)
-
-#----
-# AUR
-#----
-
-@aurvote
-@pikaur
