@@ -1,7 +1,9 @@
 #!/bin/bash
-# List explicitly installed packages by disk space that would be freed if uninstalled
-# - excludes packages from base and base-devel groups
-# Source: https://www.reddit.com/r/archlinux/comments/4kjdvf/calculate_size_of_installed_package_with/
+# List explicitly installed packages by disk space that would be freed if uninstalled (excludes `base` and `base-devel`).
+#
+# Adapted from:
+# https://www.reddit.com/r/archlinux/comments/4kjdvf/calculate_size_of_installed_package_with/
+
 echo "$(comm -23 <(pacman -Qqe | sort) <(pacman -Qqg base base-devel | sort) | while read -r pkg; do
     pacman -Rsdd --print-format '%s' "$pkg" | awk -v pkg="$pkg" '{size+=$1} END {printf "%4.0fM  %s\n", size/1048576, pkg}'
 done)" | sort -n
