@@ -92,6 +92,11 @@ comm -12 "$EXP_SHOULD" "$DEP_IS" > "$EXP_MISSING_ASDEPS"
 comm -12 "$DEP_SHOULD" "$EXP_IS" > "$DEP_MISSING_ASDEPS"
 
 # Output Pacman and AUR helper commands to correct package states
+if [[ -s $EXP_UNWANTED || -s $DEP_UNWANTED ]]; then
+    if [[ -s $EXP_MISSING_REPO || -s $DEP_MISSING_REPO || -s $EXP_MISSING_AUR || -s $DEP_MISSING_AUR || -s $EXP_MISSING_ASDEPS || -s $DEP_MISSING_ASDEPS ]]; then
+        echo -e '== WARNING: Before removing unwanted packages, install missing packages and correct install reasons. Then run pkglist again.'
+    fi
+fi
 if [[ -s $EXP_MISSING_REPO ]]; then
     echo -e '== Install missing explicit'
     echo "$ sudo pacman -S $(paste -s -d ' ' "$EXP_MISSING_REPO")"
@@ -115,9 +120,6 @@ fi
 if [[ -s $DEP_MISSING_ASDEPS ]]; then
     echo -e '== Correct install reason for dependencies'
     echo "$ sudo pacman -D --asdeps $(paste -s -d ' ' "$DEP_MISSING_ASDEPS")"
-fi
-if [[ -s $EXP_MISSING_REPO || -s $DEP_MISSING_REPO || -s $EXP_MISSING_AUR || -s $DEP_MISSING_AUR ]]; then
-    echo -e '== WARNING: Before removing unwanted packages, install any missing packages and run pkglist again.'
 fi
 if [[ -s $EXP_UNWANTED ]]; then
     echo -e '== Remove unwanted explicit'
