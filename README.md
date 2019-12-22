@@ -28,5 +28,5 @@ List explicitly installed packages by disk space that would be freed if uninstal
 
 ## Dependencies
 
-`--analyze`: [`pacman-contrib`](https://www.archlinux.org/packages/community/x86_64/pacman-contrib/)
-`--date`, `--size`: [`expac`](https://www.archlinux.org/packages/extra/x86_64/expac/)
+* `--analyze`: [`pacman-contrib`](https://www.archlinux.org/packages/community/x86_64/pacman-contrib/)
+* `--date`, `--size`: [`expac`](https://www.archlinux.org/packages/extra/x86_64/expac/)
