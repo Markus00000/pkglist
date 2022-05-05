@@ -74,7 +74,14 @@ cat "$GRP_SHOULD" "$EXP_SHOULD_NO_GROUPS" | sort -u > "$EXP_SHOULD"
 
 # Determine dependencies that should be installed
 # Output of pactree will lack dependencies that are not installed
-cat "$EXP_SHOULD" "$OPT_SHOULD" | while read -r pkg; do pactree -u "$pkg" 2> /dev/null; done > "$DEP_SHOULD_PACTREE"
+# Regular expressions:
+# - Package names start after first dash
+# - Package names end with first invalid character
+cat "$EXP_SHOULD" "$OPT_SHOULD" \
+    | while read -r pkg; do pactree --ascii "$pkg" 2> /dev/null; done \
+    | sed -e 's#^[^-]*-##g; s#[^a-z0-9@._+-].*##g' \
+    > "$DEP_SHOULD_PACTREE"
+
 # Add dependencies that are not installed
 comm -13 "$EXP_SHOULD" <(cat "$DEP_SHOULD_PACTREE" "$OPT_SHOULD" | sort -u) > "$DEP_SHOULD"
 
