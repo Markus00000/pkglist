@@ -41,6 +41,8 @@ DEP_MISSING_REPO="$TMP/dep-missing-repo"
 DEP_MISSING_AUR="$TMP/dep-missing-aur"
 EXP_MISSING_ASDEPS="$TMP/exp-missing-asdeps"
 DEP_MISSING_ASDEPS="$TMP/dep-missing-asdeps"
+UNKNOWN="$TMP/unknown"
+OFFICIAL="$TMP/official"
 
 # Fetch packages in groups
 sed '/^\s*group /!d; s/^\s*group //g; s/ .*//g' "$PKGLIST_RAW" | while read -r pkg; do pacman -Sgq "$pkg"; done | sort -u > "$GRP_SHOULD"
@@ -56,6 +58,8 @@ sed '/^+[^+]/d; s/^[@+]\+//g' "$PKGLIST" > "$EXP_SHOULD_NO_GROUPS"
 sed '/^+[^+]/!d; s/^[@+]\+//g' "$PKGLIST" > "$OPT_SHOULD"
 # Extract packages that should be explicitly installed for other packages
 sed '/^++/!d; s/^[@+]\+//g' "$PKGLIST" > "$OPTEXP_SHOULD"
+# Fetch packages unknown to pacman
+pacman -Qqm > "$UNKNOWN"
 
 # Warn of duplicates
 DUPS=$(uniq -d <(sed '/^\s*group /d; s/^[@+]\+//g' "$PKGLIST"))
@@ -97,6 +101,7 @@ comm -12 <(comm -23 "$EXP_SHOULD" "$ANY_IS") "$AUR_SHOULD" > "$EXP_MISSING_AUR"
 comm -12 <(comm -23 "$DEP_SHOULD" "$ANY_IS") "$AUR_SHOULD" > "$DEP_MISSING_AUR"
 comm -12 "$EXP_SHOULD" "$DEP_IS" > "$EXP_MISSING_ASDEPS"
 comm -12 "$DEP_SHOULD" "$EXP_IS" > "$DEP_MISSING_ASDEPS"
+comm -23 "$AUR_SHOULD" "$UNKNOWN" > "$OFFICIAL"
 
 # Output Pacman and AUR helper commands to correct package states
 if [[ -s $EXP_UNWANTED || -s $DEP_UNWANTED ]]; then
@@ -139,6 +144,10 @@ fi
 if [[ -s $EXP_UNWANTED && -s $DEP_UNWANTED ]]; then
     echo -e '== Remove all unwanted'
     echo "$ sudo pacman -R $(paste -s -d ' ' <(cat "$EXP_UNWANTED" "$DEP_UNWANTED"))"
+fi
+if [[ -s $OFFICIAL ]]; then
+    echo -e '== AUR packages in official repositories'
+    cat "$OFFICIAL"
 fi
 
 rm -rf "$TMP"
